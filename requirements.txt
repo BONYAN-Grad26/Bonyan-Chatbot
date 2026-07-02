@@ -1,0 +1,7 @@
+fastapi
+uvicorn[standard]
+pandas
+scikit-learn==1.8.0
+thefuzz
+python-levenshtein
+openpyxl
