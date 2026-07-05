@@ -46,8 +46,10 @@ EXERCISE_ENTITIES = {
 }
 
 # وصف التصنيف - بيتستخدم لما الموديل يبقى محتار بين كلاسين
-def DESCRIPTION (entity=" تمرين"): 
-   return f"عايزني أساعدك في {entity} أو ابعتلك فيديو عنه؟"
+def DESCRIPTION (entity=" أي تمرين"): 
+   if entity is None or entity == "":
+        entity = "أي تمرين"
+   return f"عايزني أساعدك في {entity} أو ابعتلك فيديو عنه؟ 🏋️"
 
 # بيانات كل تمرين - فيديو ونصايح
 # هنا هتضيف الفيديوهات والنصايح بتاعت كل تمرين
@@ -405,13 +407,18 @@ EXERCISE_DATA = {
 def handle(user_input, entity, is_short_func, user_data={}):
     """الـ handler الخاص بـ exercise_help"""
     if not entity:
-        return "عايز مساعدة في تمرين إيه بالظبط؟"
+        return "عايز مساعدة في تمرين إيه بالظبط؟ 🏋️"
     if is_short_func(user_input):
-        return f"هل عايزني أساعدك في تمرين {entity}؟"
+        return f"هل عايزني أساعدك في تمرين {entity}؟ 🏋️"
 
     data = EXERCISE_DATA.get(entity)
     if not data:
-        return f"[exercise_help | entity: {entity}]"  # مؤقت لحد ما تضيف البيانات
+        return f"معلش، لسه مفيش تفاصيل كافية عن التمرين ده 🙏 [entity: {entity}]"
 
-    tips_text = "\n- ".join(data["tips"])
-    return f"تمام...ده فيديو انجليزي لشرح التمرين: {data['english_video']} \n و ده فيديو عربي: {data['arabic_video']}\n ودي بعض النصايح الخاصة بطريقة تنفيذ التمرين :\n- {tips_text}"
+    tips_text = "\n".join(f"✅ {tip}" for tip in data["tips"])
+    return (
+        f"تمام 💪 دي شوية مصادر ونصايح لتمرين {entity.replace('_', ' ')}:\n\n"
+        f"🎥 فيديو شرح بالعربي:\n{data['arabic_video']}\n\n"
+        f"🎥 فيديو شرح بالإنجليزي:\n{data['english_video']}\n\n"
+        f"📝 نصايح لتنفيذ التمرين صح:\n{tips_text}"
+    )
