@@ -26,8 +26,8 @@ CLASS_DESCRIPTIONS = {
     "plan_edit":           plan_edit.DESCRIPTION,
     "food_details":      food_details.DESCRIPTION,
     "general_advice":    general_advice.DESCRIPTION,
-    "greetings":            lambda entity=None: "لسة محددتش عايز ايه؟",
-    "out_of_scope":      lambda entity=None: "محتاج حاجة خارج التغذية والتمرين؟",
+    "greetings":            lambda entity=None: "لسه محددتش عايز ايه 🤔",
+    "out_of_scope":      lambda entity=None: "محتاج حاجة خارج التغذية والتمرين؟ 🤔",
 }
 
 ENTITY_KEYWORDS = {
@@ -50,7 +50,7 @@ INTENT_HANDLERS = {
     "general_advice":     general_advice.handle,
     "greetings":            greetings.handle,
     "out_of_scope":        lambda user_input, entity, is_short_func, user_data={}: (
-        "أنا بوت متخصص في اسئلة ونصايح التغذية والتمارين بس...مقدرش اساعدك في اللى بتسأل عليه"
+        "أنا بوت متخصص في اسئلة ونصايح التغذية والتمارين بس 🏋️🍽️... معلش مقدرش أساعدك في اللي بتسأل عليه"
     ),
 }
 
@@ -140,7 +140,7 @@ def train_model(df):
     y = df['label']
 
     X_train, X_val, y_train, y_val = train_test_split(
-        X, y, test_size=0.15, random_state=42, stratify=y
+        X, y, test_size=0.25, random_state=42, stratify=y
     )
 
     print(f"\n📚 جمل التدريب: {len(X_train)}")
@@ -148,7 +148,7 @@ def train_model(df):
 
     vectorizer = TfidfVectorizer(
         analyzer='char_wb',
-        ngram_range=(3, 6),
+        ngram_range=(2,4),
         max_features=10000,
         sublinear_tf=True
     )
@@ -213,7 +213,7 @@ def get_response(label, user_input, entity, user_data={}):
         if result is None:
             return f"[{label} | entity: {entity}]"
         return result
-    return "معلش، مش قادر أساعدك في اللي بتسأل عنه دلوقتي."
+    return "معلش، مش قادر أساعدك في اللي بتسأل عنه دلوقتي 🙏"
 
 def deliver_response(label, user_input, entity, original_text):
     response = get_response(label, user_input, entity)
@@ -224,7 +224,7 @@ def deliver_response(label, user_input, entity, original_text):
 def build_clarification_question(best_label, s_label, entity_best, entity_second, user_input):
     desc1 = CLASS_DESCRIPTIONS.get(best_label, best_label)
     desc2 = CLASS_DESCRIPTIONS.get(s_label, s_label)
-    return f"{desc1(entity_best)} ولا {desc2(entity_second)} ولا حاجة تانية غير دول؟"
+    return f"{desc1(entity_best)} ولا {desc2(entity_second)} ولا عايز حاجة تانية ❓"
   
 # ============================================================
 # MAIN CHAT LOOP
@@ -284,7 +284,7 @@ def chat(model, vectorizer):
                     waiting_for = "followup"
                 deliver_response(last_label, fake_input, entity, original_text)
 
-            elif any(w in user_lower for w in ["تاني", "التاني", "تانى", "التانى", "2","second"]):
+            elif any(w in user_lower for w in ["تاني", "التاني", "تانى", "التانى", "2","second","ثاني", "الثاني", "ثانى", "الثانى"]):
                 last_label = second_label
                 entity, _ = find_entity(last_user_input, last_label)
                 if entity or last_label in ["greetings","out_of_scope"]:
@@ -295,14 +295,14 @@ def chat(model, vectorizer):
                     waiting_for = "followup"
                 deliver_response(last_label, fake_input, entity, original_text)
 
-            elif any(w in user_lower for w in ["تالت", "غير", "other", "اخر", "3","غيرهم"]):
+            elif any(w in user_lower for w in ["تالت", "غير", "other", "اخر", "3","غيرهم","أخر","آخر"]):
                 print("بوت: تمام، وضحلي أكتر أنت محتاج إيه بالظبط؟")
                 last_label = None
                 last_user_input = ""
                 waiting_for = None
 
             else:
-                print("بوت: قولي الخيار الأول ولا الخيار التاني ولا غيرهم؟")
+                print("بوت: قولي الخيار الأول ولا الخيار التاني ولا حاجة غيرهم؟")
 
         elif waiting_for == "followup":
             combined = last_user_input + " " + user_input
@@ -322,9 +322,9 @@ def chat(model, vectorizer):
             original_text = user_input
             best_label, s_label, best_score, diff = predict(user_input, model, vectorizer)
             entity, entity_score = find_entity(user_input, best_label)
-            if best_score < 0.25 :
+            if best_score < 0.18 :
                 best_label="out_of_scope"
-                response = get_response(best_label,user_input)
+                response = get_response(best_label,user_input,None)
                 print(f"بوت: {response}")
                 waiting_for = None
 
