@@ -5,17 +5,19 @@ import random
 from thefuzz import fuzz
 
 def DESCRIPTION (entity="الأكل أو الجيم"): 
-   return f"عايز نصيحة عامة تفيدك في {entity}"
+   if entity is None or entity == "":
+        entity = "الأكل أو الجيم"
+   return f"عايز نصيحة عامة تفيدك في {entity}؟ 💡"
 GENERAL_ADVICE_ENTITIES = {
-    "food": [
+    "الأكل": [
         "اكل", "تغذية", "وجبة", "نظام", "دايت", "diet", "nutrition",
-        "food", "meal", "سعرات", "calories", "بروتين", "protein", "غذاء"
+        "food", "meal", "سعرات", "calories", "بروتين", "protein", "غذاء","اخس","weight","وزن"
     ],
-    "exercise": [
+    "التمارين": [
         "تمرين", "رياضة", "جيم", "workout", "exercise", "training",
-        "تدريب", "كارديو", "cardio", "سيشن", "session", "تمارين"
+        "تدريب", "كارديو", "cardio", "سيشن", "session", "تمارين","عضل","muscles"
     ],
-    "commitment": [
+    "الالتزام بجدولك": [
         "التزم", "داوم", "استمر", "اكمل", "بدأت وبطلت", "مش قادر",
         "اكمل", "استمر", "تحفيز", "motivation", "consistent","اواظب",
         "بطلت", "فضلت", "صعب", "مش بلتزم", "تكاسلت", "كسل" ,"continue" ,"tied" ,"go on","keep going"
@@ -68,8 +70,7 @@ GENERAL_ADVICE_DATA = {
         "سجل تمارينك عشان تعرف إنت بتتقدم ولا لأ",
         "لو حاسس بألم حاد أثناء التمرين، وقف فوراً",
         "الإستريتش بعد التمرين بيحسن المرونة وبيقلل صلابة العضل",
-        "التبريد بعد التمرين بيساعد على تسريع الاستشفاء",
-        "المرآة في الجيم استخدمها عشان تتأكد من الفورم مش للغرور",
+        "التبريد بعد التمرين بيساعد على تسريع الاستشفاء"
     ],
 
     "exercise_commitment": [
@@ -103,15 +104,15 @@ def detect_categories(user_input, threshold=80):
     has_commitment = False
 
     for candidate in candidates:
-        for kw in GENERAL_ADVICE_ENTITIES["food"]:
+        for kw in GENERAL_ADVICE_ENTITIES["الأكل"]:
             if fuzz.ratio(candidate, kw) >= threshold or kw in candidate:
                 has_food = True
                 break
-        for kw in GENERAL_ADVICE_ENTITIES["exercise"]:
+        for kw in GENERAL_ADVICE_ENTITIES["التمارين"]:
             if fuzz.ratio(candidate, kw) >= threshold or kw in candidate:
                 has_exercise = True
                 break
-        for kw in GENERAL_ADVICE_ENTITIES["commitment"]:
+        for kw in GENERAL_ADVICE_ENTITIES["الالتزام بجدولك"]:
             if fuzz.ratio(candidate, kw) >= threshold or kw in candidate:
                 has_commitment = True
                 break
@@ -119,36 +120,47 @@ def detect_categories(user_input, threshold=80):
     return has_food, has_exercise, has_commitment
 
 def handle(user_input, entity, is_short_func, user_data={}):
+    if not entity:
+        return "عايز نصيحة بخصوص ايه بالظبط؟ 💡"
+    if is_short_func(user_input):
+        return f"هل محتاج بعض النصايح بخصوص {entity}؟ 💡"
     has_food, has_exercise, has_commitment = detect_categories(user_input)
+
+    # لو الـ entity اتحدد فعلاً (سواء من كلام اليوزر الحقيقي أو من نص تلقائي
+    # مبني على DESCRIPTION)، نضمن إننا منسيبوش الفئة دي من غير ما تتحسب،
+    # حتى لو الـ fuzzy matching على النص فشل (زي اختلاف الهمزة في "أكل"/"اكل")
+    if entity == "الأكل":
+        has_food = True
+    elif entity == "التمارين":
+        has_exercise = True
+    elif entity == "الالتزام بجدولك":
+        has_commitment = True
 
     tips = []
 
     if has_food and has_exercise:
         # الاتنين مع بعض
         if has_commitment:
-            tips += random.sample(GENERAL_ADVICE_DATA["food_commitment"], 2)
-            tips += random.sample(GENERAL_ADVICE_DATA["exercise_commitment"], 2)
+            tips += random.sample(GENERAL_ADVICE_DATA["food_commitment"], 3)
+            tips += random.sample(GENERAL_ADVICE_DATA["exercise_commitment"], 3)
         else:
-            tips += random.sample(GENERAL_ADVICE_DATA["food_general"], 2)
-            tips += random.sample(GENERAL_ADVICE_DATA["exercise_general"], 2)
+            tips += random.sample(GENERAL_ADVICE_DATA["food_general"], 3)
+            tips += random.sample(GENERAL_ADVICE_DATA["exercise_general"], 3)
 
     elif has_food:
         if has_commitment:
-            tips = random.sample(GENERAL_ADVICE_DATA["food_commitment"], 3)
+            tips = random.sample(GENERAL_ADVICE_DATA["food_commitment"], 4)
         else:
-            tips = random.sample(GENERAL_ADVICE_DATA["food_general"], 3)
+            tips = random.sample(GENERAL_ADVICE_DATA["food_general"], 4)
 
     elif has_exercise:
         if has_commitment:
-            tips = random.sample(GENERAL_ADVICE_DATA["exercise_commitment"], 3)
+            tips = random.sample(GENERAL_ADVICE_DATA["exercise_commitment"], 4)
         else:
-            tips = random.sample(GENERAL_ADVICE_DATA["exercise_general"], 3)
+            tips = random.sample(GENERAL_ADVICE_DATA["exercise_general"], 4)
 
     else:
-        # مش لاقي حاجة واضحة → مزيج عام
-        tips += random.sample(GENERAL_ADVICE_DATA["food_general"], 1)
-        tips += random.sample(GENERAL_ADVICE_DATA["exercise_general"], 1)
-        tips += random.sample(GENERAL_ADVICE_DATA["food_commitment"], 1)
+        return "عايز نصيحة بخصوص ايه بالظبط؟ 💡"
 
-    tips_text = "\n\n- ".join(tips)
-    return f"تمام ... دي بعض النصايح اللي هتفيدك:\n\n- {tips_text}"
+    tips_text = "\n\n".join(f"💡 {tip}" for tip in tips)
+    return f"تمام ✅ دي بعض النصايح اللي هتفيدك:\n\n{tips_text}"
